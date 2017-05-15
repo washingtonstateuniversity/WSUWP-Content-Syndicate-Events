@@ -139,7 +139,29 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 				</ul>
 			</div>
 			<?php
-		}
+		} elseif ( 'excerpts_legacy' === $atts['output'] ) {
+			?>
+			<div class="wsuwp-content-syndicate-wrapper">
+				<div class="wsuwp-content-syndicate-excerpts">
+					<?php
+					foreach ( $new_data as $content ) {
+						?>
+						<div class="wsuwp-content-syndicate-event">
+							<span class="content-item-event-date"><?php echo esc_html( date( $atts['date_format'], strtotime( $content->start_date ) ) ); ?></span>
+							<span class="content-item-event-title"><a href="<?php echo esc_url( $content->link ); ?>"><?php echo esc_html( $content->title ); ?></a></span>
+							<span class="content-item-event-meta">
+								<span class="content-item-event-venue"><?php echo esc_html( $content->event_venue ); ?></span>
+								<span class="content-item-event-city"><?php echo esc_html( $content->event_city ); ?></span>
+								<span class="content-item-event-state"><?php echo esc_html( $content->event_state ); ?></span>
+							</span>
+							<div class="content-item-event-excerpt"><?php echo wp_kses_post( $content->excerpt ); ?></div>
+						</div><?php
+					}
+					?>
+				</div>
+			</div>
+			<?php
+		} // End if().
 		$content = ob_get_contents();
 		ob_end_clean();
 
