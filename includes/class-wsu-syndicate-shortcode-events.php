@@ -74,6 +74,10 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 			), $request_url );
 		}
 
+		if ( ! empty( $atts['offset'] ) ) {
+			$atts['count'] = absint( $atts['count'] ) + absint( $atts['offset'] );
+		}
+
 		if ( $atts['count'] ) {
 			$count = ( 100 < absint( $atts['count'] ) ) ? 100 : $atts['count'];
 			$request_url = add_query_arg( array(
@@ -123,7 +127,12 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 			<div class="wsuwp-content-syndicate-wrapper">
 				<ul class="wsuwp-content-syndicate-list">
 					<?php
+					$offset_x = 0;
 					foreach ( $new_data as $content ) {
+						if ( $offset_x < absint( $atts['offset'] ) ) {
+							$offset_x++;
+							continue;
+						}
 						?>
 						<li class="wsuwp-content-syndicate-event">
 						<span class="content-item-event-date"><?php echo esc_html( date( $atts['date_format'], strtotime( $content->start_date ) ) ); ?></span>
@@ -144,7 +153,12 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 			<div class="wsuwp-content-syndicate-wrapper">
 				<div class="wsuwp-content-syndicate-excerpts">
 					<?php
+					$offset_x = 0;
 					foreach ( $new_data as $content ) {
+						if ( $offset_x < absint( $atts['offset'] ) ) {
+							$offset_x++;
+							continue;
+						}
 						?>
 						<div class="wsuwp-content-syndicate-event">
 							<span class="content-item-event-date"><?php echo esc_html( date( $atts['date_format'], strtotime( $content->start_date ) ) ); ?></span>
