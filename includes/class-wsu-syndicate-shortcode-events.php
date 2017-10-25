@@ -97,6 +97,10 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 				$data = array();
 			}
 
+			if ( isset( $data->code ) && 'rest_no_route' === $data->code ) {
+				$data = array();
+			}
+
 			foreach ( $data as $post ) {
 				$subset = new StdClass();
 				$subset->ID = $post->id;
