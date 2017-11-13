@@ -22,7 +22,7 @@ add_action( 'wsuwp_content_syndicate_shortcodes', 'WSU\ContentSyndicate\Events\a
  * @since 1.0.0
  */
 function activate_shortcodes() {
-	include_once( dirname( __FILE__ ) . '/includes/class-wsu-syndicate-shortcode-events.php' );
+	include_once dirname( __FILE__ . '/includes/class-wsu-syndicate-shortcode-events.php' );
 
 	// Add the [wsuwp_events] shortcode to pull calendar events.
 	new \WSU_Syndicate_Shortcode_Events();
