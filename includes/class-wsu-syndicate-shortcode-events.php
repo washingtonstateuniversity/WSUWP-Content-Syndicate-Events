@@ -16,6 +16,7 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 	 */
 	public $local_extended_atts = array(
 		'category' => '',
+		'period' => '',
 	);
 
 	/**
@@ -53,6 +54,12 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 		}
 
 		$request_url = esc_url( $site_url['host'] . $site_url['path'] . $this->default_path ) . $atts['query'];
+
+		if ( 'past' === $atts['period'] ) {
+			$request_url = add_query_arg( array(
+				'tribe_event_display' => 'past',
+			), $request_url );
+		}
 
 		if ( '' !== $atts['category'] ) {
 			$request_url = add_query_arg( array(
