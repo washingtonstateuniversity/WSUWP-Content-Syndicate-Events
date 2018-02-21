@@ -43,17 +43,25 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 		$atts = $this->process_attributes( $atts );
 
 		$site_url = $this->get_request_url( $atts );
+
 		if ( ! $site_url ) {
 			return '<!-- wsuwp_events ERROR - an empty host was supplied -->';
 		}
 
 		// Retrieve existing content from cache if available.
 		$content = $this->get_content_cache( $atts, 'wsuwp_events' );
+
 		if ( $content ) {
 			return apply_filters( 'wsuwp_content_syndicate_json', $content, $atts );
 		}
 
 		$request_url = esc_url( $site_url['host'] . $site_url['path'] . $this->default_path ) . $atts['query'];
+
+		// Build taxonomies on the REST API request URL, except for `category`
+		// as it's a different taxonomy in this case than the function expects.
+		$taxonomy_filters_atts = $atts;
+		unset( $taxonomy_filters_atts['category'] );
+		$request_url = $this->build_taxonomy_filters( $taxonomy_filters_atts, $request_url );
 
 		if ( 'past' === $atts['period'] ) {
 			$request_url = add_query_arg( array(
