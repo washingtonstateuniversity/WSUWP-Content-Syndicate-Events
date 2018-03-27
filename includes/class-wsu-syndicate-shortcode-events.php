@@ -121,6 +121,7 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 
 						// Custom data added to events by WSUWP Extended Events Calendar
 						$subset->start_date = isset( $post->start_date ) ? $post->start_date : '';
+						$subset->end_date = isset( $post->end_date ) ? $post->end_date : '';
 						$subset->event_city = isset( $post->event_city ) ? $post->event_city : '';
 						$subset->event_state = isset( $post->event_state ) ? $post->event_state : '';
 						$subset->event_venue = isset( $post->event_venue ) ? $post->event_venue : '';
