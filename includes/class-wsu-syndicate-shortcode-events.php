@@ -15,8 +15,10 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 	 * @var array A set of default attributes for this shortcode only.
 	 */
 	public $local_extended_atts = array(
-		'category' => '',
-		'period' => '',
+		'category'  => '',
+		'period'    => '',
+		'schema'    => '1.2.0', // Adjusted when forceably changing cached data via code.
+		'shortcode' => 'wsuwp_events', // To enable easier filtering by shortcode.
 	);
 
 	/**
@@ -43,25 +45,17 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 		$atts = $this->process_attributes( $atts );
 
 		$site_url = $this->get_request_url( $atts );
-
 		if ( ! $site_url ) {
 			return '<!-- wsuwp_events ERROR - an empty host was supplied -->';
 		}
 
-		// Retrieve existing content from cache if available.
-		$content = $this->get_content_cache( $atts, 'wsuwp_events' );
-
-		if ( $content ) {
-			return apply_filters( 'wsuwp_content_syndicate_json', $content, $atts );
-		}
-
-		$request_url = esc_url( $site_url['host'] . $site_url['path'] . $this->default_path ) . $atts['query'];
+		$request = $this->build_initial_request( $site_url, $atts );
 
 		// Build taxonomies on the REST API request URL, except for `category`
 		// as it's a different taxonomy in this case than the function expects.
 		$taxonomy_filters_atts = $atts;
 		unset( $taxonomy_filters_atts['category'] );
-		$request_url = $this->build_taxonomy_filters( $taxonomy_filters_atts, $request_url );
+		$request_url = $this->build_taxonomy_filters( $taxonomy_filters_atts, $request['url'] );
 
 		if ( 'past' === $atts['period'] ) {
 			$request_url = add_query_arg( array(
@@ -94,46 +88,92 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 			), $request_url );
 		}
 
-		$response = wp_remote_get( $request_url );
+		$new_data = $this->get_content_cache( $atts, 'wsuwp_events' );
 
-		$data = wp_remote_retrieve_body( $response );
+		if ( ! is_array( $new_data ) ) {
+			$response = wp_remote_get( $request_url );
 
-		$new_data = array();
-		if ( ! empty( $data ) ) {
-			$data = json_decode( $data );
+			if ( ! is_wp_error( $response ) && 404 !== wp_remote_retrieve_response_code( $response ) ) {
+				$data = wp_remote_retrieve_body( $response );
 
-			if ( null === $data ) {
-				$data = array();
-			}
+				$new_data = array();
 
-			if ( isset( $data->code ) && 'rest_no_route' === $data->code ) {
-				$data = array();
-			}
+				if ( ! empty( $data ) ) {
+					$data = json_decode( $data );
 
-			foreach ( $data as $post ) {
-				$subset = new StdClass();
-				$subset->ID = $post->id;
-				$subset->title = $post->title->rendered;
-				$subset->link = $post->link;
-				$subset->excerpt = $post->excerpt->rendered;
-				$subset->content = $post->content->rendered;
-				$subset->terms = array(); // @todo implement terms
-				$subset->date = $post->date;
+					if ( null === $data ) {
+						$data = array();
+					}
 
-				// Custom data added to events by WSUWP Extended Events Calendar
-				$subset->start_date = isset( $post->start_date ) ? $post->start_date : '';
-				$subset->event_city = isset( $post->event_city ) ? $post->event_city : '';
-				$subset->event_state = isset( $post->event_state ) ? $post->event_state : '';
-				$subset->event_venue = isset( $post->event_venue ) ? $post->event_venue : '';
+					if ( isset( $data->code ) && 'rest_no_route' === $data->code ) {
+						$data = array();
+					}
 
-				$subset_key = strtotime( $post->date );
-				while ( array_key_exists( $subset_key, $new_data ) ) {
-					$subset_key++;
+					foreach ( $data as $post ) {
+						$subset = new StdClass();
+						$subset->ID = $post->id;
+						$subset->title = $post->title->rendered;
+						$subset->link = $post->link;
+						$subset->excerpt = $post->excerpt->rendered;
+						$subset->content = $post->content->rendered;
+						$subset->terms = array(); // @todo implement terms
+						$subset->date = $post->date;
+
+						// Custom data added to events by WSUWP Extended Events Calendar
+						$subset->start_date = isset( $post->start_date ) ? $post->start_date : '';
+						$subset->end_date = isset( $post->end_date ) ? $post->end_date : '';
+						$subset->event_city = isset( $post->event_city ) ? $post->event_city : '';
+						$subset->event_state = isset( $post->event_state ) ? $post->event_state : '';
+						$subset->event_venue = isset( $post->event_venue ) ? $post->event_venue : '';
+
+						$subset_key = strtotime( $post->date );
+						while ( array_key_exists( $subset_key, $new_data ) ) {
+							$subset_key++;
+						}
+						$new_data[ $subset_key ] = $subset;
+					}
 				}
-				$new_data[ $subset_key ] = $subset;
+
+				// Store the built content in cache for repeated use.
+				$this->set_content_cache( $atts, 'wsuwp_events', $new_data );
 			}
 		}
 
+		if ( ! is_array( $new_data ) ) {
+			$new_data = array();
+		}
+
+		// Reverse sort the array of data by date.
+		krsort( $new_data );
+
+		// Only provide a count to match the total count, the array may be larger if local
+		// items are also requested.
+		if ( $atts['count'] ) {
+			$new_data = array_slice( $new_data, 0, $atts['count'], false );
+		}
+
+		$content = apply_filters( 'wsuwp_content_syndicate_json_output', false, $new_data, $atts );
+
+		if ( false === $content ) {
+			$content = $this->generate_shortcode_output( $new_data, $atts );
+		}
+
+		$content = apply_filters( 'wsuwp_content_syndicate_json', $content, $atts );
+
+		return $content;
+	}
+
+	/**
+	 * Generates the content to display for a shortcode.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param array $new_data Data containing the events to be displayed.
+	 * @param array $atts     Array of options passed with the shortcode.
+	 *
+	 * @return string Content to display for the shortcode.
+	 */
+	public function generate_shortcode_output( $new_data, $atts ) {
 		ob_start();
 		if ( 'headlines' === $atts['output'] ) {
 			?>
@@ -191,11 +231,6 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 		} // End if().
 		$content = ob_get_contents();
 		ob_end_clean();
-
-		// Store the built content in cache for repeated use.
-		$this->set_content_cache( $atts, 'wsuwp_events', $content );
-
-		$content = apply_filters( 'wsuwp_content_syndicate_json', $content, $atts );
 
 		return $content;
 	}
