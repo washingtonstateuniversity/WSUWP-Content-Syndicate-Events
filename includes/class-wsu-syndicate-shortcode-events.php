@@ -15,8 +15,10 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 	 * @var array A set of default attributes for this shortcode only.
 	 */
 	public $local_extended_atts = array(
-		'category' => '',
-		'period' => '',
+		'category'  => '',
+		'period'    => '',
+		'schema'    => '1.2.0', // Adjusted when forceably changing cached data via code.
+		'shortcode' => 'wsuwp_events', // To enable easier filtering by shortcode.
 	);
 
 	/**
