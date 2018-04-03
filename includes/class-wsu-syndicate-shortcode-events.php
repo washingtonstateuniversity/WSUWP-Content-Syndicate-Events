@@ -19,6 +19,7 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 		'period'    => '',
 		'schema'    => '1.2.0', // Adjusted when forceably changing cached data via code.
 		'shortcode' => 'wsuwp_events', // To enable easier filtering by shortcode.
+		'featured'  => '',
 	);
 
 	/**
@@ -60,6 +61,12 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 		if ( 'past' === $atts['period'] ) {
 			$request_url = add_query_arg( array(
 				'tribe_event_display' => 'past',
+			), $request_url );
+		}
+
+		if ( 'true' === $atts['featured'] ) {
+			$request_url = add_query_arg( array(
+				'featured' => 'true',
 			), $request_url );
 		}
 
