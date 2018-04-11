@@ -150,9 +150,6 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 			$new_data = array();
 		}
 
-		// Reverse sort the array of data by date.
-		krsort( $new_data );
-
 		// Only provide a count to match the total count, the array may be larger if local
 		// items are also requested.
 		if ( $atts['count'] ) {
