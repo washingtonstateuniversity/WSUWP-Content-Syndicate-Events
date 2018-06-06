@@ -5,7 +5,7 @@ Plugin URI: https://web.wsu.edu/wordpress/plugins/wsuwp-content-syndicate/
 Description: Retrieve events published on other WordPress sites.
 Author: washingtonstateuniversity, jeremyfelt
 Author URI: https://web.wsu.edu/
-Version: 1.2.2
+Version: 1.2.3
 */
 
 namespace WSU\ContentSyndicate\Events;
