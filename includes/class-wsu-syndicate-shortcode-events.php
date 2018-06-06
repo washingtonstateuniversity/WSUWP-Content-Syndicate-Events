@@ -20,6 +20,7 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 		'schema'    => '1.2.0', // Adjusted when forceably changing cached data via code.
 		'shortcode' => 'wsuwp_events', // To enable easier filtering by shortcode.
 		'featured'  => '',
+		'type'      => '',
 	);
 
 	/**
@@ -55,7 +56,12 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 		// Build taxonomies on the REST API request URL, except for `category`
 		// as it's a different taxonomy in this case than the function expects.
 		$taxonomy_filters_atts = $atts;
+
 		unset( $taxonomy_filters_atts['category'] );
+
+		// Handle the 'type' taxonomy separately, too.
+		unset( $taxonomy_filters_atts['type'] );
+
 		$request_url = $this->build_taxonomy_filters( $taxonomy_filters_atts, $request['url'] );
 
 		if ( 'past' === $atts['period'] ) {
@@ -76,6 +82,20 @@ class WSU_Syndicate_Shortcode_Events extends WSU_Syndicate_Shortcode_Base {
 			), $request_url );
 
 			$terms = explode( ',', $atts['category'] );
+			foreach ( $terms as $term ) {
+				$term = trim( $term );
+				$request_url = add_query_arg( array(
+					'filter[term]' => sanitize_key( $term ),
+				), $request_url );
+			}
+		}
+
+		if ( '' !== $atts['type'] ) {
+			$request_url = add_query_arg( array(
+				'filter[taxonomy]' => 'event-type',
+			), $request_url );
+
+			$terms = explode( ',', $atts['type'] );
 			foreach ( $terms as $term ) {
 				$term = trim( $term );
 				$request_url = add_query_arg( array(
